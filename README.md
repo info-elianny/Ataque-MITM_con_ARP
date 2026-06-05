@@ -9,7 +9,7 @@
 Simular un ataque de ARP Spoofing (Man-in-the-Middle) en una red local utilizando **Kali Linux** como atacante y **Windows 7** como víctima, con el fin de comprender cómo un atacante puede interceptar, monitorear y manipular el tráfico de red mediante el envenenamiento de las tablas ARP de los dispositivos.
 
 ### Topología de Red
-![Topología de Red](images/image2.png)
+![Topología de Red](https://i.postimg.cc/QNHzyM2v/ARP-1.png)
 
 ---
 
@@ -79,13 +79,13 @@ sudo python3 arp_mitm.py
 ## 📸 Capturas de Pantalla
 
 ### Tabla ARP antes del ataque
-![Tabla ARP antes del ataque](images/image3.png)
+![Tabla ARP antes del ataque](https://i.postimg.cc/zGS2gHhL/ARP-CAP-1.png)
 
 ### Script en ejecución
-![Script en ejecución](images/image4.png)
+![Script en ejecución](https://i.postimg.cc/85sZ9y0c/ARP-CAP-2.png)
 
 ### Tabla ARP con el ataque en marcha
-![Tabla ARP con el ataque en marcha](images/image5.png)
+![Tabla ARP con el ataque en marcha](https://i.postimg.cc/fTYBGSB2/ARP-CAP-3.png)
 
 ---
 
@@ -106,17 +106,17 @@ sudo python3 arp_mitm.py
 ### 1. Dynamic ARP Inspection (DAI)
 Función de seguridad aplicada en los switches que intercepta y valida todos los paquetes ARP. El switch compara cada ARP Reply contra la tabla de DHCP Snooping. Si la combinación de MAC e IP no coincide con una entrada legítima, el paquete es descartado y se genera una alerta en los logs.
 
-![DAI resultado](images/image6.png)
+![DAI resultado](https://i.postimg.cc/q7DLssM5/ARP-M-1.png)
 
 ### 2. ARP Estático
 Fijar manualmente la MAC del Gateway en cada host para que no pueda ser modificada por ARPs falsos.
 
-![ARP Estático resultado](images/image7.png)
+![ARP Estático resultado](https://i.postimg.cc/mD0yqT96/ARP-M-2.png)
 
 ### 3. Segmentación de Red (VLANs)
 Aislar los dispositivos en diferentes VLANs, lo cual limita el alcance del atacante si logra comprometer un segmento de la red.
 
-![VLANs resultado](images/image8.png)
+![VLANs resultado](https://i.postimg.cc/Pfw4D8sd/ARP-M-3.png)
 
 ---
 
